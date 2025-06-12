@@ -7,12 +7,12 @@ name = "wise-mcp"
 version = "0.1.0"
 description = "MCP gateway for the Wise API"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 dependencies = [
     "mcp",
     "requests>=2.28.0",
-    "python-dotenv>=1.0.0",
+    "python-dotenv>=1.0.0"
 ]
 
 [project.optional-dependencies]

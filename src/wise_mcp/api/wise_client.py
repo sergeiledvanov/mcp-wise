@@ -6,29 +6,33 @@ import os
 import requests
 from typing import Dict, List, Optional, Any
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class WiseApiClient:
     """Client for interacting with the Wise API."""
 
-    def __init__(self, api_token: Optional[str] = None):
+    def __init__(self):
         """
         Initialize the Wise API client.
         
         Args:
             api_token: The API token to use for authentication.
-                       If not provided, it will be read from the environment.
         """
-        self.api_token = api_token or os.getenv("WISE_API_TOKEN")
+
+        is_sandbox = os.getenv("WISE_IS_SANDBOX", "true").lower() == "true"
+        self.api_token = os.getenv("WISE_API_TOKEN", "")
+
         if not self.api_token:
             raise ValueError("WISE_API_TOKEN must be provided or set in the environment")
-        
-        # Determine if we should use sandbox or production API
-        is_sandbox = os.getenv("WISE_IS_SANDBOX", "true").lower() == "true"
         
         if is_sandbox:
             self.base_url = "https://api.sandbox.transferwise.tech"
         else:
             self.base_url = "https://api.transferwise.com"
+
         self.headers = {
             "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json"
@@ -90,46 +94,6 @@ class WiseApiClient:
         params = {"profile": profile_id}
         
         response = requests.get(url, headers=self.headers, params=params)
-        
-        if response.status_code >= 400:
-            self._handle_error(response)
-            
-        return response.json()
-    
-    def create_quote(
-        self, 
-        profile_id: str, 
-        source_currency: str, 
-        target_currency: str, 
-        source_amount: float,
-        target_account_id: str
-    ) -> Dict[str, Any]:
-        """
-        Create a quote for a currency exchange.
-        
-        Args:
-            profile_id: The ID of the profile to create the quote for
-            source_currency: The source currency code (e.g., 'USD')
-            target_currency: The target currency code (e.g., 'EUR')
-            source_amount: The amount in the source currency to exchange
-            target_account_id: The recipient account ID
-            
-        Returns:
-            Quote object from the Wise API containing exchange rate details
-            
-        Raises:
-            Exception: If the API request fails
-        """
-        url = f"{self.base_url}/v3/profiles/{profile_id}/quotes"
-        payload = {
-            "sourceCurrency": source_currency,
-            "targetCurrency": target_currency,
-            "sourceAmount": source_amount
-        }
-        
-        payload["targetAccount"] = target_account_id
-        
-        response = requests.post(url, headers=self.headers, json=payload)
         
         if response.status_code >= 400:
             self._handle_error(response)
