@@ -96,6 +96,46 @@ class WiseApiClient:
             
         return response.json()
     
+    def create_quote(
+        self, 
+        profile_id: str, 
+        source_currency: str, 
+        target_currency: str, 
+        source_amount: float,
+        target_account_id: str
+    ) -> Dict[str, Any]:
+        """
+        Create a quote for a currency exchange.
+        
+        Args:
+            profile_id: The ID of the profile to create the quote for
+            source_currency: The source currency code (e.g., 'USD')
+            target_currency: The target currency code (e.g., 'EUR')
+            source_amount: The amount in the source currency to exchange
+            target_account_id: The recipient account ID
+            
+        Returns:
+            Quote object from the Wise API containing exchange rate details
+            
+        Raises:
+            Exception: If the API request fails
+        """
+        url = f"{self.base_url}/v3/profiles/{profile_id}/quotes"
+        payload = {
+            "sourceCurrency": source_currency,
+            "targetCurrency": target_currency,
+            "sourceAmount": source_amount
+        }
+        
+        payload["targetAccount"] = target_account_id
+        
+        response = requests.post(url, headers=self.headers, json=payload)
+        
+        if response.status_code >= 400:
+            self._handle_error(response)
+            
+        return response.json()
+    
     def _handle_error(self, response: requests.Response) -> None:
         """
         Handle API errors by raising an exception with details.
