@@ -78,12 +78,13 @@ class WiseApiClient:
             
         return response.json()
     
-    def list_recipients(self, profile_id: str) -> List[Dict[str, Any]]:
+    def list_recipients(self, profile_id: str, currency: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         List all recipients for a profile.
         
         Args:
             profile_id: The ID of the profile to list recipients for.
+            currency: Optional. Filter recipients by currency.
             
         Returns:
             List of recipient objects from the Wise API.
@@ -93,6 +94,10 @@ class WiseApiClient:
         """
         url = f"{self.base_url}/v2/accounts"
         params = {"profile": profile_id}
+        
+        # Add currency filter if provided
+        if currency:
+            params["currency"] = currency
         
         response = requests.get(url, headers=self.headers, params=params)
         
