@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 from wise_mcp.app import mcp
 
 from ..api.wise_client_helper import init_wise_client
+from ..api.types import WiseRecipient
 from ..utils.string_utils import find_best_match_by_name
 
 @mcp.tool()
@@ -28,20 +29,7 @@ def list_recipients(profile_type: str = "personal", currency: Optional[str] = No
 
     ctx = init_wise_client(profile_type)
     
-    recipients_data = ctx.wise_api_client.list_recipients(ctx.profile.profile_id, currency)
-
-    # Format the recipients as strings
-    formatted_recipients = []
-    for recipient in recipients_data.get("content", []):
-        full_name = recipient.get("name", {}).get("fullName", "Unknown")
-        account_summary = recipient.get("accountSummary", "")
-        currency = recipient.get("currency", "")
-        country = recipient.get("country", "")
-        
-        formatted_string = f"{full_name}, {account_summary} - {currency} ({country})"
-        formatted_recipients.append(formatted_string)
-        
-    return formatted_recipients
+    return ctx.wise_api_client.list_recipients(ctx.profile.profile_id, currency)
 
 @mcp.tool()
 def find_recipient(name: str, profile_type: str = "personal", currency: Optional[str] = None) -> Dict[str, Any]:
@@ -61,13 +49,22 @@ def find_recipient(name: str, profile_type: str = "personal", currency: Optional
     """
 
     ctx = init_wise_client(profile_type)
-    recipients_data = ctx.wise_api_client.list_recipients(ctx.profile.profile_id, currency)
-    recipients = recipients_data.get("content", [])
+    recipients = ctx.wise_api_client.list_recipients(ctx.profile.profile_id, currency)
 
     if not recipients:
         raise Exception(f"No recipients found for profile type '{profile_type}'" +
                         (f" and currency '{currency}'" if currency else ""))
 
-    return find_best_match_by_name(recipients, name)
+    # Extract names and keep original recipient objects for reference
+    recipient_names = [recipient.full_name for recipient in recipients]
+    
+    # Find the best matching name
+    best_name = find_best_match_by_name(recipient_names, name)
+
+    for recipient in recipients:
+        if recipient.full_name == best_name:
+            return recipient
+
+    raise Exception(f"No recipient similar to '{name}' was found. Best match: {best_name['name']} with score {best_name['score']:.2f}")
 
 

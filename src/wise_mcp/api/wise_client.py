@@ -8,6 +8,7 @@ import requests
 from typing import Dict, List, Optional, Any
 
 from dotenv import load_dotenv
+from .types import WiseRecipient
 
 # Load environment variables from .env file
 load_dotenv()
@@ -78,7 +79,7 @@ class WiseApiClient:
             
         return response.json()
     
-    def list_recipients(self, profile_id: str, currency: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_recipients(self, profile_id: str, currency: Optional[str] = None) -> List[WiseRecipient]:
         """
         List all recipients for a profile.
         
@@ -87,7 +88,7 @@ class WiseApiClient:
             currency: Optional. Filter recipients by currency.
             
         Returns:
-            List of recipient objects from the Wise API.
+            List of WiseRecipient objects.
             
         Raises:
             Exception: If the API request fails.
@@ -104,7 +105,21 @@ class WiseApiClient:
         if response.status_code >= 400:
             self._handle_error(response)
             
-        return response.json()
+        response_data = response.json()
+        
+        # Convert the raw recipient data to WiseRecipient objects
+        recipients = []
+        for recipient in response_data.get("content", []):
+            recipients.append(WiseRecipient(
+                id=str(recipient.get("id", "")),
+                profile_id=str(recipient.get("profile", "")),
+                full_name=recipient.get("name", {}).get("fullName", "Unknown"),
+                currency=recipient.get("currency", ""),
+                country=recipient.get("country", ""),
+                account_summary=recipient.get("accountSummary", "")
+            ))
+            
+        return recipients
     
     def create_quote(
         self, 
