@@ -271,4 +271,4 @@ class WiseApiClient:
         except:
             error_msg = f"Error: HTTP {response.status_code}"
             
-        raise Exception(f"Wise API Error: {error_msg}")
+        raise Exception(f"Wise API Error: {error_data}")
