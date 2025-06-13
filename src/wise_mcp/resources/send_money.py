@@ -13,29 +13,25 @@ from wise_mcp.api.types import WiseFundResponse
 @mcp.tool()
 def send_money(
     profile_type: str,
-    recipient_name: str,
     source_currency: str,
     source_amount: float,
-    target_currency: str,
     recipient_id: str,
     payment_reference: Optional[str] = None,
     source_of_funds: Optional[str] = None
-) -> Dict[str, Any]:
+) -> str:
     """
     Send money to a recipient using the Wise API.
 
     Args:
         profile_type: The type of profile to use (personal or business)
-        recipient_name: Name of the recipient to send money to (used for validation)
         source_currency: Source currency code (e.g., 'USD')
         source_amount: Amount in source currency to send
-        target_currency: Target currency code (e.g., 'EUR')
         recipient_id: The ID of the recipient to send money to
         payment_reference: Optional. Reference message for the transfer (defaults to "money")
         source_of_funds: Optional. Source of the funds (e.g., "salary", "savings")
 
     Returns:
-        Dictionary containing the transfer details
+        String message with transfer status
 
     Raises:
         Exception: If any API request fails during the process
@@ -51,7 +47,7 @@ def send_money(
     quote = ctx.wise_api_client.create_quote(
         profile_id=ctx.profile.profile_id,
         source_currency=source_currency,
-        target_currency=target_currency,
+        target_currency=source_currency,
         source_amount=source_amount,
         recipient_id=recipient_id
     )
@@ -77,16 +73,12 @@ def send_money(
         type="BALANCE"
     )
     
-    # Combine results for complete response
-    result = {
-        "quote": quote,
-        "transfer": transfer,
-        "payment": {
-            "type": fund_response.type,
-            "status": fund_response.status,
-            "errorCode": fund_response.error_code
-        },
-        "status": "completed"
-    }
+    # Get transfer ID for the status message
+    transfer_id = transfer["id"]
     
-    return result
+    # Check the status and return appropriate message
+    if fund_response.status == "COMPLETED":
+        return f"Transfer {transfer_id} successfully sent"
+    else:
+        error_message = fund_response.error_code or "unknown error"
+        return f"Transfer {transfer_id} failed due to {error_message}"
