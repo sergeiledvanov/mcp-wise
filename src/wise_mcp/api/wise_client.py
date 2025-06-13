@@ -8,7 +8,7 @@ import requests
 from typing import Dict, List, Optional, Any
 
 from dotenv import load_dotenv
-from .types import WiseRecipient
+from .types import WiseRecipient, WiseFundResponse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -216,7 +216,7 @@ class WiseApiClient:
         profile_id: str,
         transfer_id: str,
         type: str
-    ) -> Dict[str, Any]:
+    ) -> WiseFundResponse:
         """
         Fund a transfer that has been created.
         
@@ -227,7 +227,7 @@ class WiseApiClient:
                   'BALANCE' is supported for now. If another value is provided, raise an error.
             
         Returns:
-            Payment object from the Wise API containing payment details
+            WiseFundResponse object containing payment status details
             
         Raises:
             Exception: If the API request fails
@@ -246,7 +246,14 @@ class WiseApiClient:
         if response.status_code >= 400:
             self._handle_error(response)
             
-        return response.json()
+        response_data = response.json()
+        
+        # Convert the API response to a WiseFundResponse object
+        return WiseFundResponse(
+            type=response_data.get("type", ""),
+            status=response_data.get("status", ""),
+            error_code=response_data.get("errorCode")
+        )
     
     def _handle_error(self, response: requests.Response) -> None:
         """
