@@ -25,38 +25,37 @@ def calculate_name_similarity(name1: str, name2: str) -> float:
     return SequenceMatcher(None, name1, name2).ratio()
 
 
-def find_best_match_by_name(items: List[Dict[str, Any]], 
-                           name: str, 
-                           name_extractor=lambda x: x.get("name", {}).get("fullName", "")) -> Dict[str, Any]:
+def find_best_match_by_name(names: List[str], 
+                           name: str) -> str:
     """
-    Find the item with the highest name similarity from a list of items.
+    Find the name with the highest similarity from a list of names.
 
     Args:
-        items: List of dictionaries that contain name information
-        name: Name to match against item names
-        name_extractor: Function that extracts the name from an item dictionary
-                       Default extracts from Wise API recipient format
+        names: List of strings to match against
+        name: Name to match against the list of names
 
     Returns:
-        Dictionary containing the best matching item's information
+        Dictionary containing the best matching name and its similarity score
 
     Raises:
-        Exception: If no matching item is found
+        Exception: If no matching name is found or names list is empty
     """
     best_match = None
     best_score = -1
 
-    for item in items:
-        item_name = name_extractor(item)
-        if not item_name:
+    if not names:
+        raise Exception("No names provided for matching")
+    
+    for i, candidate in enumerate(names):
+        if not candidate:
             continue
 
-        similarity_score = calculate_name_similarity(name, item_name)
+        similarity_score = calculate_name_similarity(name, candidate)
         if similarity_score > best_score:
             best_score = similarity_score
-            best_match = item
+            best_match = candidate
 
-    if not best_match:
-        raise Exception(f"No item with a name similar to '{name}' was found")
+    if best_match is None:
+        raise Exception(f"No name similar to '{name}' was found")
 
     return best_match
