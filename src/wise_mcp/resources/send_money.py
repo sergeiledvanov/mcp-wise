@@ -79,6 +79,7 @@ def send_money(
 
     if sca_response:
         # If SCA is required, return the token for further processing
+        # ott_token_status = ctx.wise_api_client.get_ott_token_status(ott=sca_response.one_time_token)
         return f"Transfer {transfer_id} requires SCA. Please enter the PIN for the following OTT {sca_response.one_time_token}"
 
     if fund_response.status == "COMPLETED":

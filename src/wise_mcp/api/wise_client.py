@@ -268,6 +268,32 @@ class WiseApiClient:
         return result
 
             
+    def get_ott_token_status(self, ott: str) -> Dict[str, Any]:
+        """
+        Get the status of a one-time token.
+        
+        Args:
+            ott: One-time token to check status for
+            
+        Returns:
+            Dict containing the token status information as returned by the Wise API
+            
+        Raises:
+            Exception: If the API request fails
+        """
+        url = f"{self.base_url}/v1/one-time-token/status"
+        
+        # Create custom headers with the one-time token
+        headers = self.headers.copy()
+        headers["One-Time-Token"] = ott
+        
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code >= 400:
+            self._handle_error(response)
+            
+        return response.json()
+    
     def _handle_error(self, response: requests.Response) -> None:
         """
         Handle API errors by raising an exception with details.
