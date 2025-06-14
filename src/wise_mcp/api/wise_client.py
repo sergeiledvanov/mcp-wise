@@ -118,7 +118,7 @@ class WiseApiClient:
                 full_name=recipient.get("name", {}).get("fullName", "Unknown"),
                 currency=recipient.get("currency", ""),
                 country=recipient.get("country", ""),
-                account_summary=recipient.get("accountSummary", "")
+                account_summary=recipient.get("accountSummary", ""),
             ))
             
         return recipients
