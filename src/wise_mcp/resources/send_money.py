@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 
 from wise_mcp.app import mcp
 from wise_mcp.api.wise_client_helper import init_wise_client
-from wise_mcp.api.types import WiseFundResponse
+from wise_mcp.api.types import WiseFundResponse, WiseFundWithScaResponse
 
 
 @mcp.tool()
@@ -31,7 +31,7 @@ def send_money(
         source_of_funds: Optional. Source of the funds (e.g., "salary", "savings")
 
     Returns:
-        String message with transfer status
+        String message with transfer status or SCA challenge details
 
     Raises:
         Exception: If any API request fails during the process
@@ -65,20 +65,24 @@ def send_money(
         transfer_params["source_of_funds"] = source_of_funds
     
     transfer = ctx.wise_api_client.create_transfer(**transfer_params)
-    
-    # 3. Fund the transfer
-    fund_response = ctx.wise_api_client.fund_transfer(
-        profile_id=ctx.profile.profile_id,
-        transfer_id=transfer["id"],
-        type="BALANCE"
-    )
-    
-    # Get transfer ID for the status message
     transfer_id = transfer["id"]
     
-    # Check the status and return appropriate message
+    # 3. Fund the transfer (may trigger SCA)
+    fund_result = ctx.wise_api_client.fund_transfer(
+        profile_id=ctx.profile.profile_id,
+        transfer_id=transfer_id,
+        type="BALANCE"
+    )
+
+    fund_response = fund_result.fund_response
+    sca_response = fund_result.sca_response
+
+    if sca_response:
+        # If SCA is required, return the token for further processing
+        return f"Transfer {transfer_id} requires SCA. Please enter the PIN for the following OTT {sca_response.one_time_token}"
+
     if fund_response.status == "COMPLETED":
         return f"Transfer {transfer_id} successfully sent"
     else:
-        error_message = fund_response.error_code or "unknown error"
+        error_message = fund_response.error_code if fund_response else "unknown error"
         return f"Transfer {transfer_id} failed due to {error_message}"
