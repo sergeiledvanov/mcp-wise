@@ -1,5 +1,5 @@
 """
-Type definitions for Wise Fund Response and SCA handling.
+Type definitions for Wise Fund Response, SCA handling, and token status.
 """
 
 from dataclasses import dataclass
