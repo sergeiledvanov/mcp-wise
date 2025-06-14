@@ -8,7 +8,7 @@ import requests
 from typing import Dict, List, Optional, Any
 
 from dotenv import load_dotenv
-from .types import WiseRecipient, WiseFundResponse
+from .types import WiseRecipient, WiseFundResponse, WiseScaResponse, WiseFundWithScaResponse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -216,9 +216,9 @@ class WiseApiClient:
         profile_id: str,
         transfer_id: str,
         type: str
-    ) -> WiseFundResponse:
+    ) -> WiseFundWithScaResponse:
         """
-        Fund a transfer that has been created.
+        Fund a transfer that has been created. This may trigger a Strong Customer Authentication (SCA) flow.
         
         Args:
             profile_id: The ID of the profile that owns the transfer
@@ -227,8 +227,10 @@ class WiseApiClient:
                   'BALANCE' is supported for now. If another value is provided, raise an error.
             
         Returns:
-            WiseFundResponse object containing payment status details
-            
+            WiseFundWithScaResponse object which may include:
+            - fund_response: The standard payment response if no SCA is required
+            - sca_response: SCA challenge details if SCA is required
+
         Raises:
             Exception: If the API request fails
         """
@@ -242,19 +244,30 @@ class WiseApiClient:
         payload = {"type": type}
         
         response = requests.post(url, headers=self.headers, json=payload)
+        result = WiseFundWithScaResponse()
+
+        print(f"Funding transfer {transfer_id} response headers: {response.headers}")
         
-        if response.status_code >= 400:
+        if response.status_code == 403:
+            if response.headers.get("x-2fa-approval-result") == "REJECTED":
+                result.sca_response = WiseScaResponse(
+                    one_time_token=response.headers.get("x-2fa-approval"),
+                )
+                return result
+
+        elif response.status_code >= 400:
             self._handle_error(response)
             
         response_data = response.json()
         
-        # Convert the API response to a WiseFundResponse object
-        return WiseFundResponse(
+        result.fund_response = WiseFundResponse(
             type=response_data.get("type", ""),
             status=response_data.get("status", ""),
             error_code=response_data.get("errorCode")
         )
-    
+        return result
+
+            
     def _handle_error(self, response: requests.Response) -> None:
         """
         Handle API errors by raising an exception with details.
