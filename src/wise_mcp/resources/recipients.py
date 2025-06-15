@@ -1,37 +1,32 @@
 """
-Wise API resources for the MCP server.
+Wise API resources for the FastMCP server.
 """
 
-import os
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
-from mcp import resource
-from ..api.wise_client import WiseApiClient
+from wise_mcp.app import mcp
 
+from ..api.wise_client_helper import init_wise_client
+from ..api.types import WiseRecipient
+from ..utils.string_utils import find_best_match_by_name
 
-@resource
-def list_recipients() -> List[Dict[str, Any]]:
+@mcp.tool()
+def list_recipients(profile_type: str = "personal", currency: Optional[str] = None) -> List[str]:
     """
-    MCP resource to list all recipients from the Wise API.
-    
+    Returns all recipients from the Wise API for the given profile type of current user. If a
+    user has multiple profiles of that type, it will return recipients from the first profile.
+
+    Args:
+        profile_type: The type of profile to list recipients for. one of [personal, business]
+        currency: Optional. Filter recipients by currency code (e.g., 'EUR', 'USD')
+
     Returns:
-        List of recipients from the Wise API.
+        List of formatted strings with recipient information
     
     Raises:
         Exception: If the API request fails or profile ID is not available.
     """
-    # Initialize the Wise API client
-    api_client = WiseApiClient()
+
+    ctx = init_wise_client(profile_type)
     
-    # Get the profile ID from the first available profile
-    # as per requirements, we need to obtain a profile ID
-    profiles = api_client.list_profiles()
-    
-    if not profiles:
-        raise Exception("No profiles found. Please create a profile in Wise first.")
-    
-    # Get the first profile ID
-    profile_id = str(profiles[0]["id"])
-    
-    # List all recipients for the profile
-    return api_client.list_recipients(profile_id)
+    return ctx.wise_api_client.list_recipients(ctx.profile.profile_id, currency)

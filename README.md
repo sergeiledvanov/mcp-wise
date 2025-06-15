@@ -10,9 +10,9 @@ A MCP (Machine Communication Protocol) server that serves as a gateway for the W
 
 ## Requirements
 
-- Python 3.9 or higher
+- Python 3.12 or higher
 - `uv` package manager
-- Wise API token (from the Wise Sandbox environment)
+- Wise API token
 
 ## Installation
 
@@ -53,27 +53,11 @@ Returns a list of all recipients from your Wise account.
 
 **Parameters**: None
 
-**Example Usage**:
-```python
-from mcp.client import Client
-
-# Connect to the MCP server
-client = Client("wise-mcp")
-
-# List all recipients
-recipients = client.list_recipients()
-
-# Process the recipients
-for recipient in recipients:
-    print(f"Recipient: {recipient['accountHolderName']}, {recipient['currency']}")
-```
-
 ## Configuration
 
 Configuration is done via environment variables, which can be set in the `.env` file:
 
 - `WISE_API_TOKEN`: Your Wise API token (required)
-- `ENVIRONMENT`: The environment to run in (development, testing, production)
 
 ## Development
 

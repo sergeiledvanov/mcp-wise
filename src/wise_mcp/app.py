@@ -1,19 +1,14 @@
 """
-MCP server initialization.
+FastMCP server initialization.
 """
 
 import os
-from mcp import MCP
-
+from mcp.server.fastmcp import FastMCP
 
 def create_app():
     """Create and configure the MCP application."""
-    app = MCP(__name__)
-    
-    # Import resources
-    from wise_mcp.resources import recipients
-    
-    return app
+    return FastMCP(__name__)
 
+mcp = create_app()
 
-app = create_app()
+from wise_mcp.resources import recipients, send_money
