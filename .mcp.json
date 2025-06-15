@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "mcp-wise": {
-      "command": "./.venv/bin/python",
-      "args": [
-        "-m",
-        "wise_mcp.main"
-      ]
+      "type": "http",
+      "url": "http://localhost:14101/mcp"
     }
   }
 }

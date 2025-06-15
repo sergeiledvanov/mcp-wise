@@ -42,7 +42,7 @@ Create a new token here.
 
 ### Adding to claude.json
 
-1. Add the Wise MCP server to your `claude.json` file in your home directory:
+1. Add the Wise MCP server to your `~/.claude.json` file in your home directory:
 
 ```json
   "mcpServers": {
@@ -52,6 +52,18 @@ Create a new token here.
           "-m",
           "wise_mcp.main"
         ],
+      }
+  }
+```
+
+or as a streamable-http
+
+```json
+  "mcpServers": {
+      "mcp-wise": {
+         "type": "streamable-http",
+         "url": "http://localhost:14101/mcp",
+         "note": "For Streamable HTTP connections, add this URL directly in your MCP Client"
       }
   }
 ```

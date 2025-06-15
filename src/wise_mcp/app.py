@@ -3,11 +3,11 @@ FastMCP server initialization.
 """
 
 import os
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 def create_app():
     """Create and configure the MCP application."""
-    return FastMCP(__name__)
+    return FastMCP("WiseMcp")
 
 mcp = create_app()
 
