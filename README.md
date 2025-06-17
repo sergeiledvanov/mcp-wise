@@ -14,6 +14,12 @@ A MCP (Machine Communication Protocol) server that serves as a gateway for the W
 - `uv` package manager
 - Wise API token
 
+## Get an API token
+
+https://wise.com/your-account/integrations-and-tools/api-tokens
+
+Create a new token here.
+
 ## Installation
 
 1. Clone this repository:
@@ -33,8 +39,6 @@ A MCP (Machine Communication Protocol) server that serves as a gateway for the W
    uv venv
    uv pip install -e .
    ```
-
-## Usage
 
 ### Adding to claude.json
 
