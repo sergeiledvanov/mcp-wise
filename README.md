@@ -36,22 +36,45 @@ A MCP (Machine Communication Protocol) server that serves as a gateway for the W
 
 ## Usage
 
-### Starting the Server
+### Adding to claude.json
 
-```bash
-cd src
-python main.py
+1. Add the Wise MCP server to your `claude.json` file in your home directory:
+
+```json
+  "mcpServers": {
+      "mcp-wise": {
+        "command": "/path/to/mcp-wise/.venv/bin/python",
+        "args": [
+          "-m",
+          "wise_mcp.main"
+        ],
+      }
+  }
 ```
 
-### Available MCP Resources
+## Available MCP Resources
 
 The server provides the following MCP resources:
 
-#### `list_recipients`
+### `list_recipients`
 
 Returns a list of all recipients from your Wise account.
 
-**Parameters**: None
+**Parameters**:
+- `profile_type`: The type of profile to list recipients for. One of [personal, business]. Default: "personal"
+- `currency`: Optional. Filter recipients by currency code (e.g., 'EUR', 'USD')
+
+### `send_money`
+
+Sends money to a recipient using the Wise API.
+
+**Parameters**:
+- `profile_type`: The type of profile to use (personal or business)
+- `source_currency`: Source currency code (e.g., 'USD') 
+- `source_amount`: Amount in source currency to send
+- `recipient_id`: The ID of the recipient to send money to
+- `payment_reference`: Optional. Reference message for the transfer (defaults to "money")
+- `source_of_funds`: Optional. Source of the funds (e.g., "salary", "savings")
 
 ## Configuration
 
