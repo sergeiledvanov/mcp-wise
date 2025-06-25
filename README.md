@@ -49,7 +49,7 @@ Add the Wise MCP server to your `~/.claude.json` file in your home directory bas
 ```json
   "mcpServers": {
       "mcp-wise": {
-        "command": "/path/to/mcp-wise/.venv/bin/python",
+        "command": "./.venv/bin/python",
         "args": [
           "-m",
           "wise_mcp.main"
