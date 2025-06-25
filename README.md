@@ -42,19 +42,46 @@ Create a new token here.
 
 ### Adding to claude.json
 
-1. Add the Wise MCP server to your `claude.json` file in your home directory:
+Add the Wise MCP server to your `~/.claude.json` file in your home directory based on your selected `MODE` in the `.env` file:
+
+#### For MODE=stdio (Standard I/O)
 
 ```json
   "mcpServers": {
       "mcp-wise": {
-        "command": "/path/to/mcp-wise/.venv/bin/python",
+        "command": "./.venv/bin/python",
         "args": [
           "-m",
           "wise_mcp.main"
-        ],
+        ]
       }
   }
 ```
+
+#### For MODE=http (Streamable HTTP)
+
+```json
+  "mcpServers": {
+      "mcp-wise": {
+         "type": "http",
+         "url": "http://localhost:14101/mcp",
+      }
+  }
+```
+
+Make sure to also update your .mcp.json file to match your selected mode. We provide template files that you can use:
+
+1. For stdio mode (default):
+   ```bash
+   cp .mcp.json.stdio .mcp.json
+   ```
+
+2. For HTTP mode:
+   ```bash
+   cp .mcp.json.http .mcp.json
+   ```
+
+These template files contain the appropriate configuration for each mode.
 
 ## Available MCP Resources
 
@@ -85,6 +112,8 @@ Sends money to a recipient using the Wise API.
 Configuration is done via environment variables, which can be set in the `.env` file:
 
 - `WISE_API_TOKEN`: Your Wise API token (required)
+- `WISE_IS_SANDBOX`: Set to true to use the Wise Sandbox API (default: false)
+- `MODE`: MCP Server transport mode, either "http" or "stdio" (default: stdio)
 
 ## Development
 
