@@ -24,7 +24,7 @@ Create a new token here.
 
 1. Clone this repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/sergeiledvanov/mcp-wise
    cd wise-mcp
    ```
 
@@ -39,35 +39,6 @@ Create a new token here.
    uv venv
    uv pip install -e .
    ```
-
-### Adding to claude.json
-
-Add the Wise MCP server to your `~/.claude.json` file in your home directory based on your selected `MODE` in the `.env` file:
-
-#### For MODE=stdio (Standard I/O)
-
-```json
-  "mcpServers": {
-      "mcp-wise": {
-        "command": "./.venv/bin/python",
-        "args": [
-          "-m",
-          "wise_mcp.main"
-        ]
-      }
-  }
-```
-
-#### For MODE=http (Streamable HTTP)
-
-```json
-  "mcpServers": {
-      "mcp-wise": {
-         "type": "http",
-         "url": "http://localhost:14101/mcp",
-      }
-  }
-```
 
 Make sure to also update your .mcp.json file to match your selected mode. We provide template files that you can use:
 
