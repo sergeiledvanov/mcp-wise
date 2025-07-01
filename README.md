@@ -7,12 +7,14 @@ A MCP (Machine Communication Protocol) server that serves as a gateway for the W
 - List all recipients from your Wise account via a simple MCP resource
 - Automatically handles authentication and profile selection
 - Uses the Wise Sandbox API for development and testing
+- Available as a Docker image for easy integration
 
 ## Requirements
 
-- Python 3.12 or higher
-- `uv` package manager
+- Python 3.12 or higher (only if installing directly)
+- `uv` package manager (only if installing directly)
 - Wise API token
+- Docker (if using Docker image)
 
 ## Get an API token
 
@@ -21,6 +23,8 @@ https://wise.com/your-account/integrations-and-tools/api-tokens
 Create a new token here.
 
 ## Installation
+
+### Option 1: Direct Installation
 
 1. Clone this repository:
    ```bash
@@ -39,6 +43,37 @@ Create a new token here.
    uv venv
    uv pip install -e .
    ```
+
+### Option 2: Using Docker
+
+You can build a Docker image:
+
+```bash
+docker build -t mcp-wise .
+```
+
+And add to Claude Code by adding it to your `.mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "mcp-wise": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--init",
+        "-e", "WISE_API_TOKEN=your_api_token_here",
+        "-e", "WISE_IS_SANDBOX=true",
+        "mcp-wise:latest"
+      ]
+    }
+  }
+}
+```
+
+Make sure to replace `your_api_token_here` with your actual Wise API token.
 
 Make sure to also update your .mcp.json file to match your selected mode. We provide template files that you can use:
 
