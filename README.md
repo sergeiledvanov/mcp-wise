@@ -5,6 +5,9 @@ A MCP (Machine Communication Protocol) server that serves as a gateway for the W
 ## Features
 
 - List all recipients from your Wise account via a simple MCP resource
+- Send money to recipients using the Wise API
+- Create invoice payment requests with line items and payer information
+- Get available balance currencies for invoice creation
 - Automatically handles authentication and profile selection
 - Uses the Wise Sandbox API for development and testing
 - Available as a Docker image for easy integration
@@ -112,6 +115,44 @@ Sends money to a recipient using the Wise API.
 - `recipient_id`: The ID of the recipient to send money to
 - `payment_reference`: Optional. Reference message for the transfer (defaults to "money")
 - `source_of_funds`: Optional. Source of the funds (e.g., "salary", "savings")
+
+### `create_invoice`
+
+Creates an invoice payment request using the Wise API. **Note: Invoices are only available for business profiles.**
+
+**Parameters**:
+- `profile_type`: The type of profile to use (must be "business" - personal profiles cannot create invoices)
+- `balance_id`: The ID of the balance to use for the invoice
+- `due_days`: Number of days from today when the invoice is due
+- `line_items`: List of line items, each containing:
+  - `name`: Name/description of the item
+  - `amount`: Unit price amount
+  - `currency`: Currency code (e.g., 'EUR', 'USD')
+  - `quantity`: Quantity of the item
+  - `tax_name`: Optional tax name
+  - `tax_percentage`: Optional tax percentage (0-100)
+  - `tax_behaviour`: Optional tax behaviour ("INCLUDED" or "EXCLUDED")
+- `payer_name`: Name of the payer
+- `payer_address`: Address of the payer (optional)
+   - `firstLine`: Street address (e.g. 56 Shoreditch High Street, London E1 6JJ)
+   - `countryIso3Code`: ISO-3 country code, (e.g. "gbr")
+- `payer_locale`: Payer's locale/language preference (e.g., "en", "fr", "de")
+- `payer_email`: Optional email of the payer
+- `invoice_number`: Optional invoice number (auto-generated if not provided)
+- `message`: Optional message to include with the invoice
+- `issue_date`: Optional issue date in YYYY-MM-DD format (defaults to today)
+
+The invoice creation process follows these steps:
+1. Creates an empty invoice to get auto-generated fields (like invoice number)
+2. Updates the invoice with full data (line items, payer info, etc.)
+3. Publishes the invoice to make it active and available for payment
+
+### `get_balance_currencies`
+
+Gets available currencies and balance IDs for creating invoices. **Note: Invoices are only available for business profiles.**
+
+**Parameters**:
+- `profile_type`: The type of profile to use (should be "business" for invoice creation)
 
 ## Configuration
 

@@ -8,7 +8,7 @@ import requests
 from typing import Dict, List, Optional, Any
 
 from dotenv import load_dotenv
-from .types import WiseRecipient, WiseFundResponse, WiseScaResponse, WiseFundWithScaResponse
+from .types import WiseRecipient, WiseFundResponse, WiseScaResponse, WiseFundWithScaResponse, PaymentRequestInvoiceCommand, PaymentRequestV2, Money
 
 # Load environment variables from .env file
 load_dotenv()
@@ -50,7 +50,7 @@ class WiseApiClient:
         Raises:
             Exception: If the API request fails.
         """
-        url = f"{self.base_url}/v1/profiles"
+        url = f"{self.base_url}/v2/profiles"
         response = requests.get(url, headers=self.headers)
         
         if response.status_code >= 400:
@@ -71,7 +71,7 @@ class WiseApiClient:
         Raises:
             Exception: If the API request fails.
         """
-        url = f"{self.base_url}/v1/profiles/{profile_id}"
+        url = f"{self.base_url}/v2/profiles/{profile_id}"
         response = requests.get(url, headers=self.headers)
         
         if response.status_code >= 400:
@@ -267,7 +267,242 @@ class WiseApiClient:
         )
         return result
 
+    def create_empty_invoice(
+        self,
+        profile_id: str,
+        balance_id: int,
+        due_at: str,
+        issue_date: str
+    ) -> PaymentRequestV2:
+        """
+        Create an empty invoice to get auto-generated fields like invoice number.
+        
+        Args:
+            profile_id: The ID of the profile to create the invoice for
+            balance_id: The ID of the balance to use for the invoice
+            due_at: Due date in YYYY-MM-DDTHH:MM:SS.SSSZ format
+            issue_date: Issue date in YYYY-MM-DDTHH:MM:SS.SSSZ format
+
+        Returns:
+            PaymentRequestV2 object containing the created empty invoice
             
+        Raises:
+            Exception: If the API request fails
+        """
+        url = f"{self.base_url}/v2/profiles/{profile_id}/acquiring/payment-requests"
+        
+        payload = {
+            "requestType": "INVOICE",
+            "selectedPaymentMethods": [],  
+            "balanceId": balance_id,
+            "dueAt": due_at,
+            "issueDate": issue_date,
+            "lineItems": []
+        }
+
+        response = requests.post(url, headers=self.headers, json=payload)
+        
+        if response.status_code >= 400:
+            self._handle_error(response)
+            
+        response_data = response.json()
+        
+        return PaymentRequestV2(
+            id=response_data["id"],
+            amount=Money(
+                value=response_data["amount"]["value"],
+                currency=response_data["amount"]["currency"]
+            ),
+            profile_id=response_data["profileId"],
+            balance_id=response_data["balanceId"],
+            creator=response_data["creator"],
+            status=response_data["status"],
+            link=response_data.get("link"),
+            created_at=response_data.get("createdAt"),
+            published_at=response_data.get("publishedAt"),
+            due_at=response_data.get("dueAt"),
+            message=response_data.get("message"),
+            description=response_data.get("description"),
+            reference=response_data.get("reference"),
+            request_type=response_data.get("requestType"),
+            invoice=response_data.get("invoice")
+        )
+
+    def update_payment_request_v2(
+        self,
+        profile_id: str,
+        payment_request_id: str,
+        payment_request: PaymentRequestInvoiceCommand
+    ) -> PaymentRequestV2:
+        """
+        Update an existing payment request with full invoice data.
+        
+        Args:
+            profile_id: The ID of the profile
+            payment_request_id: The ID of the payment request to update
+            payment_request: The payment request command object with full data
+            
+        Returns:
+            PaymentRequestV2 object containing the updated payment request
+            
+        Raises:
+            Exception: If the API request fails
+        """
+        url = f"{self.base_url}/v2/profiles/{profile_id}/acquiring/payment-requests/{payment_request_id}"
+        
+        payload = {
+            "requestType": payment_request.request_type,
+            "selectedPaymentMethods": payment_request.selected_payment_methods,
+            "balanceId": payment_request.balance_id,
+            "dueAt": payment_request.due_at,
+            "issueDate": payment_request.issue_date,
+            "lineItems": []
+        }
+        
+        # Add optional fields if they exist
+        if payment_request.invoice_number:
+            payload["invoiceNumber"] = payment_request.invoice_number
+            
+        if payment_request.message:
+            payload["message"] = payment_request.message
+            
+        if payment_request.payer:
+            payer_data = {}
+            if payment_request.payer.name:
+                payer_data["name"] = payment_request.payer.name
+            if payment_request.payer.email:
+                payer_data["email"] = payment_request.payer.email
+            if payment_request.payer.address and payment_request.payer.address.countryIso3Code:
+                payer_data["address"] = {
+                    "firstLine": payment_request.payer.address.firstLine,
+                    "countryIso3Code": payment_request.payer.address.countryIso3Code
+                }
+            if payment_request.payer.locale:
+                payer_data["locale"] = payment_request.payer.locale
+            payload["payer"] = payer_data
+        
+        # Convert line items
+        for item in payment_request.line_items:
+            line_item = {
+                "name": item.name,
+                "unitPrice": {
+                    "value": item.unit_price.value,
+                    "currency": item.unit_price.currency
+                },
+                "quantity": item.quantity
+            }
+            
+            if item.tax:
+                line_item["tax"] = {
+                    "name": item.tax.name,
+                    "percentage": item.tax.percentage,
+                    "behaviour": item.tax.behaviour
+                }
+            
+            payload["lineItems"].append(line_item)
+        
+                # log the payload for debugging
+        print(f"Creating payment request with payload: {payload}")
+
+        response = requests.put(url, headers=self.headers, json=payload)
+        
+        if response.status_code >= 400:
+            self._handle_error(response)
+            
+        response_data = response.json()
+        
+        return PaymentRequestV2(
+            id=response_data["id"],
+            amount=Money(
+                value=response_data["amount"]["value"],
+                currency=response_data["amount"]["currency"]
+            ),
+            profile_id=response_data["profileId"],
+            balance_id=response_data["balanceId"],
+            creator=response_data["creator"],
+            status=response_data["status"],
+            link=response_data.get("link"),
+            created_at=response_data.get("createdAt"),
+            published_at=response_data.get("publishedAt"),
+            due_at=response_data.get("dueAt"),
+            message=response_data.get("message"),
+            description=response_data.get("description"),
+            reference=response_data.get("reference"),
+            request_type=response_data.get("requestType"),
+            invoice=response_data.get("invoice")
+        )
+
+    def publish_payment_request(
+        self,
+        profile_id: str,
+        payment_request_id: str
+    ) -> PaymentRequestV2:
+        """
+        Publish a payment request to make it active and available for payment.
+        
+        Args:
+            profile_id: The ID of the profile
+            payment_request_id: The ID of the payment request to publish
+            
+        Returns:
+            PaymentRequestV2 object containing the published payment request
+            
+        Raises:
+            Exception: If the API request fails
+        """
+        url = f"{self.base_url}/v2/profiles/{profile_id}/acquiring/payment-requests/{payment_request_id}/status"
+        
+        payload = {"status": "PUBLISHED"}
+        
+        response = requests.put(url, headers=self.headers, json=payload)
+        
+        if response.status_code >= 400:
+            self._handle_error(response)
+            
+        response_data = response.json()
+        
+        return PaymentRequestV2(
+            id=response_data["id"],
+            amount=Money(
+                value=response_data["amount"]["value"],
+                currency=response_data["amount"]["currency"]
+            ),
+            profile_id=response_data["profileId"],
+            balance_id=response_data["balanceId"],
+            creator=response_data["creator"],
+            status=response_data["status"],
+            link=response_data.get("link"),
+            created_at=response_data.get("createdAt"),
+            published_at=response_data.get("publishedAt"),
+            due_at=response_data.get("dueAt"),
+            message=response_data.get("message"),
+            description=response_data.get("description"),
+            reference=response_data.get("reference"),
+            request_type=response_data.get("requestType"),
+            invoice=response_data.get("invoice")
+        )
+
+    def get_balance_currencies(self, profile_id: str) -> List[Dict[str, Any]]:
+        """
+        Get available currencies and balances for a profile.
+        
+        Args:
+            profile_id: The ID of the profile to get balances for
+            
+        Returns:
+            List of balance objects with currency and balance ID information
+            
+        Raises:
+            Exception: If the API request fails
+        """
+        url = f"{self.base_url}/v1/profiles/{profile_id}/acquiring/requesting-configuration/currency-options"
+        response = requests.get(url, headers=self.headers)
+        
+        if response.status_code >= 400:
+            self._handle_error(response)
+            
+        return response.json()
+
     def get_ott_token_status(self, ott: str) -> Dict[str, Any]:
         """
         Get the status of a one-time token.

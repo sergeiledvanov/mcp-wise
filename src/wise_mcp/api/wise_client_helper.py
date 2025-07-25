@@ -26,10 +26,10 @@ def init_wise_client(profile_type: str = "personal") -> WiseClientContext:
     if not profiles:
         raise Exception("No profiles found. Please create a profile in Wise first.")
     
-    # Find the first profile with the specified type
+    # Find the first profile with the specified type that is not "HIDDEN"
     matching_profile = None
     for profile in profiles:
-        if profile.get("type") == profile_type:
+        if str(profile.get("type")).lower() == str(profile_type).lower() and profile.get("currentState") != "HIDDEN":
             matching_profile = profile
             break
     
