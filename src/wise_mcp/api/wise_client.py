@@ -30,9 +30,9 @@ class WiseApiClient:
             raise ValueError("WISE_API_TOKEN must be provided or set in the environment")
         
         if is_sandbox:
-            self.base_url = "https://api.sandbox.transferwise.tech"
+            self.base_url = "https://api.wise-sandbox.com"
         else:
-            self.base_url = "https://api.transferwise.com"
+            self.base_url = "https://api.wise.com"
 
         self.headers = {
             "Authorization": f"Bearer {self.api_token}",
@@ -121,6 +121,61 @@ class WiseApiClient:
             ))
             
         return recipients
+
+    def list_activities(
+        self,
+        profile_id: str,
+        since: Optional[str] = None,
+        until: Optional[str] = None,
+        status: Optional[str] = None,
+        monetary_resource_type: Optional[str] = None,
+        size: int = 100,
+        next_cursor: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """List profile activities, including transfer and balance activity."""
+        url = f"{self.base_url}/v1/profiles/{profile_id}/activities"
+        params: Dict[str, Any] = {"size": max(1, min(size, 100))}
+        for key, value in (
+            ("since", since),
+            ("until", until),
+            ("status", status),
+            ("monetaryResourceType", monetary_resource_type),
+            ("nextCursor", next_cursor),
+        ):
+            if value:
+                params[key] = value
+
+        response = requests.get(url, headers=self.headers, params=params)
+        if response.status_code >= 400:
+            self._handle_error(response)
+        return response.json()
+
+    def get_balance_statement(
+        self,
+        profile_id: str,
+        balance_id: str,
+        currency: str,
+        interval_start: str,
+        interval_end: str,
+        statement_type: str = "COMPACT",
+        statement_locale: str = "en",
+    ) -> Dict[str, Any]:
+        """Retrieve detailed transactions for one balance and date interval."""
+        url = (
+            f"{self.base_url}/v1/profiles/{profile_id}/balance-statements/"
+            f"{balance_id}/statement.json"
+        )
+        params = {
+            "currency": currency,
+            "intervalStart": interval_start,
+            "intervalEnd": interval_end,
+            "type": statement_type,
+            "statementLocale": statement_locale,
+        }
+        response = requests.get(url, headers=self.headers, params=params)
+        if response.status_code >= 400:
+            self._handle_error(response)
+        return response.json()
     
     def create_quote(
         self, 
